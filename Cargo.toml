@@ -1,0 +1,10 @@
+[package]
+name = "hocon-analyzer"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+logos = "0.15.1"
+rowan = "0.16.1"
+async-lsp = "0.2.2"
+hocon-rs = "0.1.0"
