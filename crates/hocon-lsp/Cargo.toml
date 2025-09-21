@@ -1,0 +1,20 @@
+[package]
+name = "hocon-lsp"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = { workspace = true, features = ["full"] }
+tokio-util = { workspace = true, features = ["compat"] }
+futures = { workspace = true }
+logos = { workspace = true }
+rowan = { workspace = true }
+async-lsp = { workspace = true }
+lsp-types = { workspace = true }
+tower = { workspace = true }
+hocon-rs = { workspace = true, features = ["urls_includes"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+indexmap = { workspace = true }
+ahash = { workspace = true }
+derive_more = { workspace = true, features = ["deref", "deref_mut"] }

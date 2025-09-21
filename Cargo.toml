@@ -1,10 +1,26 @@
-[package]
+[workspace]
+members = ["crates/*"]
+
+resolver = "2"
+
+[workspace.package]
 name = "hocon-analyzer"
 version = "0.1.0"
 edition = "2024"
 
-[dependencies]
+[workspace.dependencies]
 logos = "0.15.1"
 rowan = "0.16.1"
 async-lsp = "0.2.2"
+lsp-types = "0.95.0"
+tower = "0.5.2"
 hocon-rs = "0.1.0"
+tokio = "1.47.1"
+tokio-util = "0.7.16"
+futures = "0.3.31"
+clap = "4.5.48"
+tracing = "0.1.41"
+tracing-subscriber = "0.3.20"
+indexmap = "2.11.4"
+ahash = "0.8.12"
+derive_more = "2.0.1"
