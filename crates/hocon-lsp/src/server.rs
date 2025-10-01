@@ -4,7 +4,6 @@ use futures::future::BoxFuture;
 use lsp_types::request::Request;
 use std::ops::ControlFlow;
 
-
 type ResponseFuture<R, E> = BoxFuture<'static, Result<<R as Request>::Result, E>>;
 
 impl LanguageServer for World {
