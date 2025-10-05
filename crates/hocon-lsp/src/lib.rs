@@ -1,4 +1,9 @@
 pub(crate) mod builder;
+pub(crate) mod error;
+pub(crate) mod language;
+pub(crate) mod lexer;
+pub(crate) mod macros;
+pub(crate) mod parser;
 pub(crate) mod server;
-mod syntax;
+pub(crate) mod syntax;
 pub(crate) mod world;

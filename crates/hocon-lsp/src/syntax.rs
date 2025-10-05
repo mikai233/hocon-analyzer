@@ -2,53 +2,73 @@ use logos::{Lexer, Logos};
 
 #[derive(Debug, Logos, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 #[repr(u16)]
-enum SyntaxKind {
-    #[regex(r"[\u0009\u000A\u000B\u000C\u000D\u001C-\u001F\uFEFF\p{Zs}\p{Zl}\p{Zp}]+")]
-    Whitespace,
+pub(crate) enum HoconSyntaxKind {
+    //Tokens
+    #[regex(r"[\u0009\u000B\u000C\u000D\u001C-\u001F\uFEFF\p{Zs}\p{Zl}\p{Zp}]+")]
+    HorizontalWhitespace,
+    #[regex(r"(\n|\r\n)")]
+    LineEnding,
     #[token(",")]
     Comma,
     #[token("=")]
     Equals,
+    #[token("+")]
+    Plus,
     #[token(":")]
     Colon,
-    #[regex(r"true|false")]
-    Bool,
     #[regex(r#"[^$"{}\[\]:=,+#`^?!@*&\\.\u0009\u000A\u000B\u000C\u000D\u001C-\u001F\uFEFF\p{Zs}\p{Zl}\p{Zp}]+"#)]
-    UnquotedString,
     #[regex(r#"""#, lex_quoted_string)]
-    QuotedString,
     #[regex(r#"""""#, lex_multiline_string)]
-    MultiLineString,
+    Ident,
     #[token("[")]
-    BracketStart,
+    LeftBracket,
     #[token("]")]
-    BracketEnd,
+    RightBracket,
     #[token("{")]
-    BraceStart,
+    LeftBrace,
     #[token("}")]
-    BraceEnd,
+    RightBrace,
     #[regex(r"#[^\n\r]*")]
     HashComment,
     #[regex(r"//[^\n\r]*")]
     SlashComment,
-    #[regex(r#"\$\{\??"#)]
-    Substitution,
+    #[token("$")]
+    Dollar,
+    #[token("?")]
+    QuestionMark,
     #[token(".")]
     Dot,
-    #[regex(r"-?(0|[1-9][0-9]*)", priority = 3)]
-    Int,
-    #[regex(r"-?(0|[1-9][0-9]*)\.[0-9]+([eE][+-]?[0-9]+)?")]
-    #[regex(r"-?(0|[1-9][0-9]*)([eE][+-]?[0-9]+)")]
-    Float,
+    Error,
+    Bool,
+    Number,
+    UnquotedString,
+    QuotedString,
+    MultilineString,
+    LeftParen,
+    RightParen,
+    Include,
+    Required,
+    File,
+    Url,
+    Classpath,
+    //Nodes
+    Root,
+    Key,
+    Value,
+    Object,
+    Array,
+    Substitution,
+    PathExpression,
+    Inclusition,
 }
 
-impl From<SyntaxKind> for rowan::SyntaxKind {
-    fn from(value: SyntaxKind) -> Self {
+impl From<HoconSyntaxKind> for rowan::SyntaxKind {
+    fn from(value: HoconSyntaxKind) -> Self {
         Self(value as u16)
     }
 }
 
-fn lex_multiline_string(lex: &mut Lexer<SyntaxKind>) -> Option<()> {
+fn lex_multiline_string(lex: &mut Lexer<HoconSyntaxKind>) -> Option<()> {
     let rest = &lex.remainder();
 
     let mut end = 0;
@@ -63,7 +83,7 @@ fn lex_multiline_string(lex: &mut Lexer<SyntaxKind>) -> Option<()> {
     None
 }
 
-fn lex_quoted_string(lex: &mut Lexer<SyntaxKind>) -> Option<()> {
+fn lex_quoted_string(lex: &mut Lexer<HoconSyntaxKind>) -> Option<()> {
     let remainder: &str = lex.remainder();
     let mut escaped = false;
 
@@ -91,11 +111,26 @@ fn lex_quoted_string(lex: &mut Lexer<SyntaxKind>) -> Option<()> {
 mod tests {
     use logos::Logos;
 
-    use crate::syntax::SyntaxKind;
+    use crate::syntax::HoconSyntaxKind;
 
     #[test]
     fn test_lexer() {
-        let mut lex = SyntaxKind::lexer(r#"include required(file("a")) 1.0"#);
+        let mut lex = HoconSyntaxKind::lexer(r#"include required(file("a")) 1.0"#);
+        while let Some(kind) = lex.next() {
+            let kind = kind.unwrap();
+            let slice = lex.slice();
+            println!("kind:{:?}", kind);
+            println!("slice:{:?}", slice);
+        }
+    }
+
+    #[test]
+    fn test_lexer2() {
+        let config = std::fs::read_to_string(
+            "/Users/mikai/IdeaProjects/akka/akka-actor/src/main/resources/reference.conf",
+        )
+        .unwrap();
+        let mut lex = HoconSyntaxKind::lexer(&config);
         while let Some(kind) = lex.next() {
             let kind = kind.unwrap();
             let slice = lex.slice();
