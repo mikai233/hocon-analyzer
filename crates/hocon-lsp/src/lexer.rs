@@ -1,4 +1,6 @@
-use std::ops::Deref;
+use std::{ops::Deref, range::Range};
+
+use rowan::{TextRange, TextSize};
 
 use crate::syntax::HoconSyntaxKind;
 
@@ -12,17 +14,19 @@ pub(crate) struct Lexer<'a> {
 pub(crate) struct Token<'a> {
     pub(crate) token: HoconSyntaxKind,
     pub(crate) slice: &'a str,
+    pub(crate) range: Range<usize>,
 }
 
 impl<'a> Lexer<'a> {
     pub(crate) fn new(lexer: &mut logos::Lexer<'a, HoconSyntaxKind>) -> Self {
         let mut tokens = vec![];
-        while let Some(syntax) = lexer.next() {
+        while let Some((syntax, range)) = lexer.spanned().next() {
             match syntax {
                 Ok(syntax) => {
                     let ok = Token {
                         token: syntax,
                         slice: lexer.slice(),
+                        range,
                     };
                     tokens.push(ok);
                 }
@@ -30,6 +34,7 @@ impl<'a> Lexer<'a> {
                     let err = Token {
                         token: HoconSyntaxKind::Error,
                         slice: lexer.slice(),
+                        range,
                     };
                     tokens.push(err);
                 }

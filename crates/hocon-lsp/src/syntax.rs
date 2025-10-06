@@ -53,13 +53,14 @@ pub(crate) enum HoconSyntaxKind {
     Classpath,
     //Nodes
     Root,
+    Entry,
     Key,
     Value,
     Object,
     Array,
     Substitution,
     PathExpression,
-    Inclusition,
+    Inclusion,
 }
 
 impl From<HoconSyntaxKind> for rowan::SyntaxKind {

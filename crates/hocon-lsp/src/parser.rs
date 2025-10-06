@@ -1,5 +1,8 @@
+use std::range::Range;
+
 use logos::Logos;
-use rowan::GreenNodeBuilder;
+use rowan::{GreenNodeBuilder, TextRange, TextSize};
+use tracing::subscriber::NoSubscriber;
 
 use crate::{
     error::Error,
@@ -16,9 +19,14 @@ pub(crate) struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    #[inline]
-    pub fn token(&mut self, kind: HoconSyntaxKind, text: &str) {
-        self.builder.token(kind.into(), text);
+    pub(crate) fn error(&mut self, range: Range<usize>, message: impl Into<String>) {
+        let start = TextSize::new(range.start as u32);
+        let end = TextSize::new(range.end as u32);
+        let error = Error {
+            range: TextRange::new(start, end),
+            message: message.into(),
+        };
+        self.errors.push(value);
     }
 
     pub(crate) fn parse(source: &str) {
@@ -42,6 +50,7 @@ impl<'a> Parser<'a> {
         while let Some(Token {
             token: syntax,
             slice,
+            range,
         }) = self.lexer.next()
         {
             match syntax {
@@ -50,7 +59,11 @@ impl<'a> Parser<'a> {
                 }
                 HoconSyntaxKind::Ident => {
                     self.lexer.rewind();
-                    self.parse_object_entries();
+                    node_scope!(
+                        self.builder,
+                        HoconSyntaxKind::Entry,
+                        self.parse_object_entries()
+                    )
                 }
                 HoconSyntaxKind::LeftBrace => {
                     self.builder.token(syntax.into(), slice);
@@ -77,6 +90,7 @@ impl<'a> Parser<'a> {
         while let Some(Token {
             token: syntax,
             slice,
+            range,
         }) = self.lexer.next()
         {
             match syntax {
@@ -111,6 +125,7 @@ impl<'a> Parser<'a> {
             Some(Token {
                 token: syntax,
                 slice,
+                range,
             }) => match syntax {
                 HoconSyntaxKind::Equals | HoconSyntaxKind::Colon => {
                     self.builder.token(syntax.into(), slice);
@@ -121,16 +136,22 @@ impl<'a> Parser<'a> {
                         Some(Token {
                             token: syntax,
                             slice,
+                            range,
                         }) => match syntax {
                             HoconSyntaxKind::Equals => {
                                 self.builder.token(syntax.into(), slice);
                             }
                             _ => {
                                 self.builder.token(HoconSyntaxKind::Error.into(), slice);
+                                self.error(range, "expected =");
+                                return;
                             }
                         },
                         None => {
-                            //TODO error
+                            let mut range = range;
+                            range.end += 1;
+                            self.error(range, "expected =");
+                            return;
                         }
                     }
                 }
@@ -141,10 +162,15 @@ impl<'a> Parser<'a> {
                 }
                 _ => {
                     self.builder.token(HoconSyntaxKind::Error.into(), slice);
+                    self.error(range, "expected `=` or `+=` or `:`");
+                    return;
                 }
             },
             None => {
-                // TODO error
+                let mut range = range;
+                range.end += 1;
+                self.error(range, "expected `=` or `+=` or `:`");
+                return;
             }
         }
         node_scope!(self.builder, HoconSyntaxKind::Value, self.parse_value());
@@ -154,6 +180,7 @@ impl<'a> Parser<'a> {
         while let Some(Token {
             token: syntax,
             slice,
+            range,
         }) = self.lexer.next()
         {
             match syntax {
