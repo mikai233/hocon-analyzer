@@ -9,7 +9,7 @@ version = "0.1.0"
 edition = "2024"
 
 [workspace.dependencies]
-logos = "0.15.1"
+logos = "0.16.0"
 rowan = "0.16.1"
 async-lsp = "0.2.2"
 lsp-types = "0.95.0"
